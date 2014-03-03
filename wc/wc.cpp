@@ -179,8 +179,7 @@ void walk_the_tree(sqlite3* db, TCHAR* path)
 				lstrcat(subpath, TEXT("\\"));
 				lstrcat(subpath, lpFindFileData.cFileName);
 
-				// push test
-				//_tprintf(TEXT("path: %s folder: %s\n"), subpath, lpFindFileData.cFileName);
+				_tprintf(TEXT("path: %s folder: %s\n"), subpath, lpFindFileData.cFileName);
 
 				walk_the_tree(db, subpath);
 
