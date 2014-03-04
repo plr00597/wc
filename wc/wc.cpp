@@ -13,6 +13,11 @@ enum HashType
 #define SCAN_KEY_MD5_BUSIZE 255
 char scan_key_md5[SCAN_KEY_MD5_BUSIZE];
 
+DWORD time1 = 0;
+DWORD time2 = 0;
+DWORD time3 = 0;
+DWORD time4 = 0;
+
 unsigned char* hash_func(BYTE* input, int size, HashType type)
 {
 	HCRYPTPROV hCryptProv;
@@ -76,6 +81,8 @@ int sql_execute_nonselect_stmt(sqlite3* db, char* sql)
 	if (db == NULL || sql == NULL)
 		return !SQLITE_OK;
 
+	DWORD time2_start = GetTickCount();
+
 	char* errmsg = NULL;
 	int sql_ret_val = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
 
@@ -83,6 +90,10 @@ int sql_execute_nonselect_stmt(sqlite3* db, char* sql)
 		printf("SQL Error: %s\n", errmsg);
 
 	sqlite3_free(errmsg);
+
+	DWORD time2_stop = GetTickCount();
+
+	time2 += (time2_stop - time2_start);
 
 	return sql_ret_val;
 }
@@ -106,6 +117,8 @@ int sql_insert_file_data(sqlite3* db, TCHAR* filepath, TCHAR* filename, int file
 {
 	if (db == NULL)
 		return !SQLITE_OK;
+
+	DWORD time1_start = GetTickCount();
 
 	char sql[2048];
 	memset(sql, 0, 2048);
@@ -138,6 +151,10 @@ int sql_insert_file_data(sqlite3* db, TCHAR* filepath, TCHAR* filename, int file
 
 	free(filepath_utf8);
 	free(md5_hash);
+
+	DWORD time1_stop = GetTickCount();
+
+	time1 += (time1_stop - time1_start);
 
 	return sql_execute_nonselect_stmt(db, sql);
 }
@@ -198,7 +215,7 @@ void walk_the_tree(sqlite3* db, TCHAR* path)
 			filesize.LowPart = lpFindFileData.nFileSizeLow;
 			filesize.HighPart = lpFindFileData.nFileSizeHigh;
 
-			_tprintf(TEXT("path: %s file: %s, size %ld B\n"), filepath, lpFindFileData.cFileName, filesize.QuadPart);
+			//_tprintf(TEXT("path: %s file: %s, size %ld B\n"), filepath, lpFindFileData.cFileName, filesize.QuadPart);
 			sql_insert_file_data(db, path, lpFindFileData.cFileName, (int)filesize.QuadPart);
 
 			free(filepath);
@@ -264,6 +281,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		error_msg(TEXT("Wow64RevertWow64FsRedirection"));
 
 	sqlite3_close(db);
+
+	printf("=========================");
+	printf("MD5 hash time %ld ms", time1);
+	printf("INSERT time   %ld ms", time2);
 
 	getchar();
 
